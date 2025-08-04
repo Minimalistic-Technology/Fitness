@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Eye, EyeOff, Lock, Mail, ArrowLeft, User, Phone } from 'lucide-react';
+import axios from "axios"; 
 
 // Define an interface for the form data
 interface SignupFormData {
@@ -76,13 +77,33 @@ const SignupPage = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = () => {
-        if (validateForm()) {
-            console.log('Sign up attempt:', formData);
-            // Handle sign up logic here
-        }
-    };
+ const handleSubmit = async () => {
+  if (validateForm()) {
+    const fullName = `${formData.firstName} ${formData.lastName}`;
 
+    try {
+      const res = await axios.post("http://localhost:5000/api/v1/auth/signup", {
+        username: fullName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        institute: "Fitness Pro"
+      });
+
+      alert("Signup successful!");
+      // Optional: router.push("/login");
+
+    } catch (err: any) {
+      if (err.response) {
+        console.error("Signup error:", err.response.data?.error);
+        alert(err.response.data?.error || "Signup failed");
+      } else {
+        console.error("Network error:", err.message);
+        alert("Something went wrong. Please try again.");
+      }
+    }
+  }
+};
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
             {/* Background Pattern */}

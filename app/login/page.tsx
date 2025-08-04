@@ -157,7 +157,8 @@
 
 import React, { useState } from 'react';
 import { Eye, EyeOff, Lock, Mail, ArrowLeft } from 'lucide-react';
-
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
@@ -165,26 +166,48 @@ export default function LoginPage() {
         password: '',
         rememberMe: false
     });
+  const router = useRouter();
+   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
 
-    const handleInputChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
+    setFormData(prev => ({
         ...prev,
-        [name]: type === 'checkbox' ? checked : value
-        }));
-    };
+        [name]: type === 'checkbox' ? checked : value,
+    }));
+};
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        console.log('Login attempt:', formData);
-        // Handle login logic here
-    };
 
-    const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        console.log('Login attempt:', formData);
-        // Handle login logic here
-    };
+    const handleButtonClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    try {
+        const res = await axios.post("http://localhost:5000/api/v1/auth/login", {
+            email: formData.email,
+            password: formData.password,
+        }, {
+            withCredentials: true, // required for setting cookies like refreshToken
+        });
+
+        const { accessToken, user } = res.data;
+
+        console.log("Login successful:", user);
+        alert("Login successful");
+        router.push("/");
+        // Optional: save token in localStorage/sessionStorage
+        localStorage.setItem("accessToken", accessToken);
+
+        // Optional: navigate to dashboard
+        // router.push("/dashboard");
+
+    } catch (err: any) {
+        if (err.response) {
+            alert(err.response.data?.error || "Login failed");
+        } else {
+            console.error("Login error:", err.message);
+            alert("Something went wrong. Please try again.");
+        }
+    }
+};
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">

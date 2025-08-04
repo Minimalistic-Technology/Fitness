@@ -1,8 +1,8 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { Calculator, Scale, TrendingUp, X, History, Utensils, Target, Clock, Apple } from 'lucide-react';
+import axios from 'axios';
 
 // Define a type for BMI data
 interface BMIData {
@@ -30,6 +30,17 @@ interface DietPlan {
     exerciseRecommendation: string;
 }
 
+// API response type
+interface ApiBmiResponse {
+    bmi: number;
+    bmiCategory: string;
+    calorieTarget: number;
+    foodPlan: {
+        type: 'breakfast' | 'lunch' | 'dinner' | 'snacks';
+        items: string[];
+    }[];
+}
+
 // This is your main BMI tracker component
 export default function BMITracker() {
     const [height, setHeight] = useState('');
@@ -42,6 +53,10 @@ export default function BMITracker() {
     const [age, setAge] = useState('');
     const [gender, setGender] = useState('male');
     const [activityLevel, setActivityLevel] = useState('moderate');
+    const [apiError, setApiError] = useState<string | null>(null);
+
+    // API base URL
+    const API_BASE_URL = 'http://localhost:5000/api/fitness/bmi';
 
     // Load BMI history from memory on component mount
     useEffect(() => {
@@ -53,10 +68,65 @@ export default function BMITracker() {
         if (!height || !weight) return;
         
         setIsCalculating(true);
+        setApiError(null);
         
-        // Add a small delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
+        try {
+            let heightInMeters, weightInKg;
+            
+            if (unit === 'metric') {
+                heightInMeters = parseFloat(height) / 100;
+                weightInKg = parseFloat(weight);
+            } else {
+                heightInMeters = parseFloat(height) * 0.0254;
+                weightInKg = parseFloat(weight) * 0.453592;
+            }
+            
+            // Call API to get BMI and diet plan
+            const response = await axios.post<ApiBmiResponse>(API_BASE_URL, {
+                height: parseFloat(height) * (unit === 'metric' ? 1 : 2.54), // Convert to cm if imperial
+                weight: parseFloat(weight) * (unit === 'metric' ? 1 : 0.453592), // Convert to kg if imperial
+                age: parseInt(age) || 25,
+                gender,
+                activityLevel
+            });
+
+            const bmiValue = response.data.bmi;
+            setBmi(bmiValue);
+
+            // Create new BMI entry
+            const newBMIEntry: BMIData = {
+                weight: parseFloat(weight),
+                weightKg: weightInKg,
+                height: parseFloat(height),
+                heightM: heightInMeters,
+                date: new Date().toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                }),
+                unit: unit,
+                bmi: bmiValue
+            };
+            
+            const updatedHistory = [newBMIEntry, ...bmiHistory];
+            setBmiHistory(updatedHistory);
+            
+        } catch (error) {
+            console.error('Error fetching BMI data:', error);
+            setApiError('Failed to calculate BMI. Please try again.');
+            
+            // Fallback to local calculation if API fails
+            calculateBMILocally();
+        } finally {
+            setIsCalculating(false);
+        }
+    };
+
+    // Fallback local BMI calculation
+    const calculateBMILocally = () => {
         let heightInMeters, weightInKg;
         
         if (unit === 'metric') {
@@ -90,8 +160,6 @@ export default function BMITracker() {
         
         const updatedHistory = [newBMIEntry, ...bmiHistory];
         setBmiHistory(updatedHistory);
-        
-        setIsCalculating(false);
     };
 
     const getBMICategory = (bmiValue: number) => {
@@ -119,38 +187,6 @@ export default function BMITracker() {
             bgColor: 'bg-red-100',
             description: 'Consult a healthcare provider for guidance'
         };
-    };
-
-    const calculateCalories = (bmiValue: number, weightKg: number) => {
-        const ageNum = parseInt(age) || 25;
-        let bmr;
-        
-        // Calculate BMR using Mifflin-St Jeor Equation
-        if (gender === 'male') {
-            bmr = 10 * weightKg + 6.25 * (parseFloat(height) * (unit === 'metric' ? 1 : 2.54)) - 5 * ageNum + 5;
-        } else {
-            bmr = 10 * weightKg + 6.25 * (parseFloat(height) * (unit === 'metric' ? 1 : 2.54)) - 5 * ageNum - 161;
-        }
-
-        // Activity multipliers
-        const activityMultipliers = {
-            sedentary: 1.2,
-            light: 1.375,
-            moderate: 1.55,
-            active: 1.725,
-            very_active: 1.9
-        };
-
-        const maintenanceCalories = Math.round(bmr * activityMultipliers[activityLevel as keyof typeof activityMultipliers]);
-        
-        // Adjust calories based on BMI category
-        if (bmiValue < 18.5) {
-            return maintenanceCalories + 300; // Surplus for weight gain
-        } else if (bmiValue > 25) {
-            return maintenanceCalories - 500; // Deficit for weight loss
-        } else {
-            return maintenanceCalories; // Maintenance
-        }
     };
 
     const getDietPlan = (bmiValue: number): DietPlan => {
@@ -319,11 +355,44 @@ export default function BMITracker() {
         }
     };
 
+    const calculateCalories = (bmiValue: number, weightKg: number) => {
+        const ageNum = parseInt(age) || 25;
+        let bmr;
+        
+        // Calculate BMR using Mifflin-St Jeor Equation
+        if (gender === 'male') {
+            bmr = 10 * weightKg + 6.25 * (parseFloat(height) * (unit === 'metric' ? 1 : 2.54)) - 5 * ageNum + 5;
+        } else {
+            bmr = 10 * weightKg + 6.25 * (parseFloat(height) * (unit === 'metric' ? 1 : 2.54)) - 5 * ageNum - 161;
+        }
+
+        // Activity multipliers
+        const activityMultipliers = {
+            sedentary: 1.2,
+            light: 1.375,
+            moderate: 1.55,
+            active: 1.725,
+            very_active: 1.9
+        };
+
+        const maintenanceCalories = Math.round(bmr * activityMultipliers[activityLevel as keyof typeof activityMultipliers]);
+        
+        // Adjust calories based on BMI category
+        if (bmiValue < 18.5) {
+            return maintenanceCalories + 300; // Surplus for weight gain
+        } else if (bmiValue > 25) {
+            return maintenanceCalories - 500; // Deficit for weight loss
+        } else {
+            return maintenanceCalories; // Maintenance
+        }
+    };
+
     const resetBMI = () => {
         setHeight('');
         setWeight('');
         setBmi(null);
         setShowDietPlan(false);
+        setApiError(null);
     };
 
     const clearHistory = () => {
@@ -355,6 +424,13 @@ export default function BMITracker() {
                 </div>
 
                 <div className="p-6">
+                    {/* Error message */}
+                    {apiError && (
+                        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                            {apiError}
+                        </div>
+                    )}
+
                     {/* Unit Toggle */}
                     <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
                         <button
