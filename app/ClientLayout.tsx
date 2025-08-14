@@ -65,7 +65,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-   const isAdmin = pathname.startsWith("/Admin");
+   const isAdmin = pathname.startsWith("/admin");
 
   // Log on mount and when pathname changes
   useEffect(() => {

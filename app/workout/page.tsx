@@ -17,6 +17,15 @@ import {
   Repeat,
   Timer,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import axios from "axios"; // Add axios for API calls
+import { useAuth } from "../context/context"; // Assuming this provides the auth token
+
+interface Exercise {
+  name: string;
+  sets: number;
+  reps: string;
+}
 
 interface Workout {
   _id: string;
@@ -26,29 +35,89 @@ interface Workout {
   image?: string;
   video?: string;
   type: "strength" | "cardio" | "hiit" | "yoga";
+  exercises: Exercise[];
 }
 
 interface VideoModalProps {
   workout: Workout | null;
   isOpen: boolean;
   onClose: () => void;
+  onStartWorkout: (workout: Workout) => void;
 }
 
 const VideoModal: React.FC<VideoModalProps> = ({
   workout,
   isOpen,
   onClose,
+  onStartWorkout,
 }) => {
+  const { token } = useAuth(); // Get auth token from context
+  const [isFavorite, setIsFavorite] = useState<boolean>(false); // State to track favorite status
+  const [loadingFavorite, setLoadingFavorite] = useState<boolean>(false); // State for loading
+
+  // Check if the workout is already in favorites when modal opens
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (!workout || !token) return;
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/fitness/me",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const favorites = response.data.favouriteWorkouts || [];
+        setIsFavorite(
+          favorites.some((fav: Workout) => fav._id === workout._id)
+        );
+      } catch (error) {
+        console.error("Error checking favorite status:", error);
+      }
+    };
+    checkFavoriteStatus();
+  }, [workout, token]);
+
+  // Handle adding/removing from favorites
+  const handleFavoriteToggle = async () => {
+    if (!workout || !token) return;
+    setLoadingFavorite(true);
+    try {
+      if (isFavorite) {
+        // Remove from favorites
+        await axios.delete(
+          `http://localhost:5000/api/fitness/favourites/${workout._id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setIsFavorite(false);
+      } else {
+        // Add to favorites
+        await axios.post(
+          `http://localhost:5000/api/fitness/favourites/${workout._id}`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setIsFavorite(true);
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    } finally {
+      setLoadingFavorite(false);
+    }
+  };
+
   if (!isOpen || !workout) return null;
 
-  // Convert YouTube share link to embed format
   const getEmbedUrl = (url: string): string => {
     if (url.includes("youtu.be")) {
       return url.replace("youtu.be/", "www.youtube.com/embed/").split("?")[0];
     } else if (url.includes("watch?v=")) {
       return url.replace("watch?v=", "embed/").split("&")[0];
     }
-    return url; // fallback if it's already an embed or direct mp4
+    return url;
   };
 
   return (
@@ -105,16 +174,41 @@ const VideoModal: React.FC<VideoModalProps> = ({
                 Workout Overview
               </h3>
               <p className="text-gray-600 mb-4">{workout.description}</p>
+              <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                Exercises
+              </h3>
+              <ul className="list-disc list-inside text-gray-600">
+                {workout.exercises.map((exercise, index) => (
+                  <li key={index}>
+                    {exercise.name} - {exercise.sets} sets x {exercise.reps}{" "}
+                    reps
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
           <div className="flex gap-4 mt-6 pt-6 border-t border-gray-200">
-            <button className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+            <button
+              onClick={() => onStartWorkout(workout)}
+              className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
               <PlayCircle className="w-5 h-5" />
               Start Workout
             </button>
-            <button className="px-6 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-              Add to Favorites
+            <button
+              onClick={handleFavoriteToggle}
+              disabled={loadingFavorite}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                isFavorite
+                  ? "bg-red-500 text-white hover:bg-red-600"
+                  : "border border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              <Heart
+                className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`}
+              />
+              {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
             </button>
           </div>
         </div>
@@ -123,7 +217,7 @@ const VideoModal: React.FC<VideoModalProps> = ({
   );
 };
 
-const WorkoutPage: React.FC = () => {
+const WorkoutsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
@@ -131,6 +225,7 @@ const WorkoutPage: React.FC = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchWorkouts = async () => {
@@ -170,6 +265,11 @@ const WorkoutPage: React.FC = () => {
   });
 
   const handleStartWorkout = (workout: Workout) => {
+    localStorage.setItem(`workout-${workout._id}`, JSON.stringify(workout));
+    router.push(`/Workout-Progress/${workout._id}`);
+  };
+
+  const handleOpenModal = (workout: Workout) => {
     setSelectedWorkout(workout);
     setIsModalOpen(true);
   };
@@ -292,7 +392,7 @@ const WorkoutPage: React.FC = () => {
                     </p>
 
                     <button
-                      onClick={() => handleStartWorkout(workout)}
+                      onClick={() => handleOpenModal(workout)}
                       className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center gap-2"
                     >
                       Start Now
@@ -334,9 +434,10 @@ const WorkoutPage: React.FC = () => {
         workout={selectedWorkout}
         isOpen={isModalOpen}
         onClose={closeModal}
+        onStartWorkout={handleStartWorkout}
       />
     </div>
   );
 };
 
-export default WorkoutPage;
+export default WorkoutsPage;

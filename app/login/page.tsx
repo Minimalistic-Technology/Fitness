@@ -368,6 +368,16 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
+         
+      if (
+        formData.email == process.env.NEXT_PUBLIC_admin_gmail &&
+        formData.password == process.env.NEXT_PUBLIC_admin_password
+      ) {
+        console.log("admin login send");
+        router.push("/admin");
+        return;
+      }
+
       const res = await axios.post(
         "http://localhost:5000/api/fitness/login",
         {
