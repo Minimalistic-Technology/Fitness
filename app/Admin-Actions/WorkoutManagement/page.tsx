@@ -117,40 +117,37 @@ const WorkoutManagement: React.FC = () => {
   //   }
   // };
 
-
-
-const handleInputChange = (field: string, value: any, index?: number) => {
-  if (field.startsWith("exercise_") && index !== undefined) {
-    const [, subField] = field.split("_");
-    setFormData((prev) => ({
-      ...prev,
-      exercises: prev.exercises?.map((ex, i) =>
-        i === index
-          ? {
-              ...ex,
-              [subField]:
-                subField === "name"
-                  ? value
-                  : isNaN(parseInt(value)) // Handle NaN for sets/reps
-                  ? 0 // Fallback to 0
-                  : parseInt(value),
-            }
-          : ex
-      ),
-    }));
-  } else {
-    setFormData((prev) => ({
-      ...prev,
-      [field]:
-        field === "duration"
-          ? isNaN(parseInt(value)) // Handle NaN for duration
-            ? 0 // Fallback to 0
-            : parseInt(value)
-          : value,
-    }));
-  }
-};
-
+  const handleInputChange = (field: string, value: any, index?: number) => {
+    if (field.startsWith("exercise_") && index !== undefined) {
+      const [, subField] = field.split("_");
+      setFormData((prev) => ({
+        ...prev,
+        exercises: prev.exercises?.map((ex, i) =>
+          i === index
+            ? {
+                ...ex,
+                [subField]:
+                  subField === "name"
+                    ? value
+                    : isNaN(parseInt(value)) // Handle NaN for sets/reps
+                    ? 0 // Fallback to 0
+                    : parseInt(value),
+              }
+            : ex
+        ),
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [field]:
+          field === "duration"
+            ? isNaN(parseInt(value)) // Handle NaN for duration
+              ? 0 // Fallback to 0
+              : parseInt(value)
+            : value,
+      }));
+    }
+  };
 
   const addExerciseField = () => {
     setFormData((prev) => ({

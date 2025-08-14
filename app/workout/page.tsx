@@ -144,6 +144,8 @@ const WorkoutPage: React.FC = () => {
         }
         const data: Workout[] = await response.json();
         setWorkouts(data);
+        console.log(data)
+        setLoading(false)
       } catch (err) {
         setError("Error fetching workouts. Please try again later.");
       } finally {
