@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Plus,
   Edit3,
@@ -17,6 +17,12 @@ import {
   Calendar,
 } from "lucide-react";
 
+interface Exercise {
+  name: string;
+  sets: number;
+  reps: number;
+}
+
 interface Workout {
   _id: string;
   title: string;
@@ -24,49 +30,15 @@ interface Workout {
   duration: number;
   type: "strength" | "cardio" | "hiit" | "yoga";
   image?: string;
-  exercises: number;
+  video?: string;
+  exercises: Exercise[];
   createdAt: string;
 }
 
-const WorkoutManagement: React.FC = () => {
-  const [workouts, setWorkouts] = useState<Workout[]>([
-    {
-      _id: "1",
-      title: "Morning HIIT Blast",
-      description:
-        "High-intensity interval training to kickstart your day with energy and burn calories effectively.",
-      duration: 30,
-      type: "hiit",
-      image:
-        "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400",
-      exercises: 8,
-      createdAt: "2024-01-15",
-    },
-    {
-      _id: "2",
-      title: "Strength Builder Pro",
-      description:
-        "Build muscle and increase strength with this comprehensive full-body workout routine.",
-      duration: 45,
-      type: "strength",
-      image:
-        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400",
-      exercises: 12,
-      createdAt: "2024-01-10",
-    },
-    {
-      _id: "3",
-      title: "Zen Yoga Flow",
-      description:
-        "Relax and rejuvenate with this gentle yoga session focused on flexibility and mindfulness.",
-      duration: 60,
-      type: "yoga",
-      image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400",
-      exercises: 15,
-      createdAt: "2024-01-08",
-    },
-  ]);
+const BASE_URL = "http://localhost:5000/api/fitness";
 
+const WorkoutManagement: React.FC = () => {
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -78,13 +50,35 @@ const WorkoutManagement: React.FC = () => {
     duration: 30,
     type: "strength",
     image: "",
-    exercises: 1,
+    video: "",
+    exercises: [{ name: "", sets: 0, reps: 0 }],
   });
+
+  // Fetch workouts on component mount
+  useEffect(() => {
+    fetchWorkouts();
+  }, []);
+
+  const fetchWorkouts = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/workouts`);
+      const data = await response.json();
+      setWorkouts(data);
+    } catch (error) {
+      console.error("Failed to fetch workouts:", error);
+    }
+  };
 
   const handleOpenModal = (workout?: Workout) => {
     if (workout) {
       setEditingWorkout(workout);
-      setFormData(workout);
+      setFormData({
+        ...workout,
+        exercises:
+          workout.exercises.length > 0
+            ? workout.exercises
+            : [{ name: "", sets: 0, reps: 0 }],
+      });
     } else {
       setEditingWorkout(null);
       setFormData({
@@ -93,7 +87,8 @@ const WorkoutManagement: React.FC = () => {
         duration: 30,
         type: "strength",
         image: "",
-        exercises: 1,
+        video: "",
+        exercises: [{ name: "", sets: 0, reps: 0 }],
       });
     }
     setIsModalOpen(true);
@@ -105,44 +100,130 @@ const WorkoutManagement: React.FC = () => {
     setFormData({});
   };
 
-  const handleInputChange = (field: string, value: any) => {
+  // const handleInputChange = (field: string, value: any, index?: number) => {
+  //   if (field.startsWith("exercise_") && index !== undefined) {
+  //     const [, subField] = field.split("_");
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       exercises: prev.exercises?.map((ex, i) =>
+  //         i === index ? { ...ex, [subField]: value } : ex
+  //       ),
+  //     }));
+  //   } else {
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       [field]: value,
+  //     }));
+  //   }
+  // };
+
+
+
+const handleInputChange = (field: string, value: any, index?: number) => {
+  if (field.startsWith("exercise_") && index !== undefined) {
+    const [, subField] = field.split("_");
     setFormData((prev) => ({
       ...prev,
-      [field]: value,
+      exercises: prev.exercises?.map((ex, i) =>
+        i === index
+          ? {
+              ...ex,
+              [subField]:
+                subField === "name"
+                  ? value
+                  : isNaN(parseInt(value)) // Handle NaN for sets/reps
+                  ? 0 // Fallback to 0
+                  : parseInt(value),
+            }
+          : ex
+      ),
+    }));
+  } else {
+    setFormData((prev) => ({
+      ...prev,
+      [field]:
+        field === "duration"
+          ? isNaN(parseInt(value)) // Handle NaN for duration
+            ? 0 // Fallback to 0
+            : parseInt(value)
+          : value,
+    }));
+  }
+};
+
+
+  const addExerciseField = () => {
+    setFormData((prev) => ({
+      ...prev,
+      exercises: [...(prev.exercises || []), { name: "", sets: 0, reps: 0 }],
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (editingWorkout) {
-      // Update workout
-      setWorkouts((prev) =>
-        prev.map((workout) =>
-          workout._id === editingWorkout._id
-            ? { ...workout, ...formData }
-            : workout
-        )
-      );
-    } else {
-      // Create new workout
-      const newWorkout: Workout = {
-        ...formData,
-        _id: Date.now().toString(),
-        createdAt: new Date().toISOString().split("T")[0],
-      } as Workout;
-
-      setWorkouts((prev) => [newWorkout, ...prev]);
-    }
-
-    handleCloseModal();
+  const removeExerciseField = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      exercises: prev.exercises?.filter((_, i) => i !== index),
+    }));
   };
 
-  const handleDelete = (workoutId: string) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      if (editingWorkout) {
+        // Update workout
+        const response = await fetch(
+          `${BASE_URL}/workouts/${editingWorkout._id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          }
+        );
+        if (response.ok) {
+          const updatedWorkout = await response.json();
+          setWorkouts((prev) =>
+            prev.map((workout) =>
+              workout._id === editingWorkout._id ? updatedWorkout : workout
+            )
+          );
+        }
+      } else {
+        // Create new workout
+        const response = await fetch(`${BASE_URL}/workouts`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        });
+        if (response.ok) {
+          const newWorkout = await response.json();
+          setWorkouts((prev) => [newWorkout, ...prev]);
+        }
+      }
+      handleCloseModal();
+    } catch (error) {
+      console.error("Failed to save workout:", error);
+    }
+  };
+
+  const handleDelete = async (workoutId: string) => {
     if (confirm("Are you sure you want to delete this workout?")) {
-      setWorkouts((prev) =>
-        prev.filter((workout) => workout._id !== workoutId)
-      );
+      try {
+        const response = await fetch(`${BASE_URL}/workouts/${workoutId}`, {
+          method: "DELETE",
+        });
+        if (response.ok) {
+          setWorkouts((prev) =>
+            prev.filter((workout) => workout._id !== workoutId)
+          );
+        }
+      } catch (error) {
+        console.error("Failed to delete workout:", error);
+      }
     }
   };
 
@@ -277,7 +358,7 @@ const WorkoutManagement: React.FC = () => {
                         </span>
                         <span className="text-gray-400">•</span>
                         <span className="text-sm text-gray-500">
-                          {workout.exercises} exercises
+                          {workout.exercises.length} exercises
                         </span>
                       </div>
 
@@ -349,7 +430,7 @@ const WorkoutManagement: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -399,22 +480,6 @@ const WorkoutManagement: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Number of Exercises *
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formData.exercises || 1}
-                    onChange={(e) =>
-                      handleInputChange("exercises", parseInt(e.target.value))
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Image URL
                   </label>
                   <input
@@ -423,6 +488,19 @@ const WorkoutManagement: React.FC = () => {
                     onChange={(e) => handleInputChange("image", e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Video URL
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.video || ""}
+                    onChange={(e) => handleInputChange("video", e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="https://example.com/video.mp4"
                   />
                 </div>
               </div>
@@ -442,6 +520,92 @@ const WorkoutManagement: React.FC = () => {
                 />
               </div>
 
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Exercises *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addExerciseField}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Exercise
+                  </button>
+                </div>
+                {formData.exercises?.map((exercise, index) => (
+                  <div
+                    key={index}
+                    className="border border-gray-200 rounded-lg p-4 mb-3 relative"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => removeExerciseField(index)}
+                      className="absolute top-2 right-2 text-red-600 hover:text-red-700"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Exercise Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={exercise.name}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "exercise_name",
+                              e.target.value,
+                              index
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Sets
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={exercise.sets}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "exercise_sets",
+                              parseInt(e.target.value),
+                              index
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Reps
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={exercise.reps}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "exercise_reps",
+                              parseInt(e.target.value),
+                              index
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
                 <button
                   type="button"
@@ -458,7 +622,7 @@ const WorkoutManagement: React.FC = () => {
                   {editingWorkout ? "Update Workout" : "Create Workout"}
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}
