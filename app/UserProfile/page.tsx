@@ -55,16 +55,18 @@ const UserProfilePage: React.FC = () => {
   });
   const [editedProfile, setEditedProfile] = useState<UserProfile>(userProfile);
   const [favoriteWorkouts, setFavoriteWorkouts] = useState<Workout[]>([]);
-  const { token } = useAuth();
+  const { token, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) {
-      router.replace("/login");
-    } else {
-      fetchProfile();
+    if (!loading) {
+      if (!token) {
+        router.replace("/login");
+      } else {
+        fetchProfile();
+      }
     }
-  }, [token, router]);
+  }, [token, router, loading]);
 
   const fetchProfile = async () => {
     try {
@@ -359,7 +361,7 @@ const UserProfilePage: React.FC = () => {
                             {userProfile.totalWorkouts}
                           </span>
                         </div>
-                       
+
                         <div className="flex justify-between">
                           <span className="text-gray-600">
                             Favorite Workouts:

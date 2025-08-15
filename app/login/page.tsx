@@ -374,11 +374,11 @@ export default function LoginPage() {
         formData.password == process.env.NEXT_PUBLIC_admin_password
       ) {
         console.log("admin login send");
-        router.push("/admin");
+        router.push("/Admin");
         return;
       }
-
-      const res = await axios.post(
+else
+      {const res = await axios.post(
         "http://localhost:5000/api/fitness/login",
         {
           email: formData.email,
@@ -399,6 +399,7 @@ export default function LoginPage() {
 
       // Optional: navigate to dashboard
       // router.push("/dashboard");
+      }
     } catch (err: any) {
       if (err.response) {
         alert(err.response.data?.error || "Login failed");

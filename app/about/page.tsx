@@ -1,4 +1,5 @@
-    import React from 'react';
+    import Link from 'next/link';
+import React from 'react';
 
     const AboutPage = () => {
     const stats = [
@@ -172,12 +173,12 @@
                 Your journey to a healthier, stronger you starts today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-bold hover:bg-blue-50 transition-colors duration-200 shadow-lg hover:shadow-xl">
+                <Link href={"/workout"} className="bg-white yellow text-blue-600 px-8 py-3 rounded-lg font-bold hover:bg-blue-50 transition-colors duration-200 shadow-lg hover:shadow-xl">
                 Get Started Today
-                </button>
-                <button className="border-2 border-white text-white px-8 py-3 rounded-lg font-bold hover:bg-white hover:text-blue-600 transition-all duration-200">
+                </Link>
+                <Link href={"/plans"} className="border-2 border-white yellow text-white px-8 py-3 rounded-lg font-bold hover:bg-white hover:text-blue-600 transition-all duration-200">
                 View Our Programs
-                </button>
+                </Link>
             </div>
             </div>
         </section>

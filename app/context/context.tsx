@@ -146,12 +146,14 @@ type AuthContextType = {
   token: string | null;
   setToken: (token: string) => void;
   removeToken: () => void;
+  loading:boolean
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setTokenState] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Load token from localStorage after mount
   useEffect(() => {
@@ -159,6 +161,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (savedToken) {
       setTokenState(savedToken);
     }
+    setLoading(false);
   }, []);
 
   // Save token to state & localStorage
@@ -174,7 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, setToken, removeToken }}>
+    <AuthContext.Provider value={{ token, setToken, removeToken,loading }}>
       {children}
     </AuthContext.Provider>
   );

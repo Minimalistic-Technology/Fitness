@@ -110,9 +110,11 @@ import { useState, useEffect } from "react";
 
 export default function Navbar() {
   const [isLoading, setIsLoading] = useState(false);
+  const [activeItem, setActiveItem] = useState(0);
   const pathname = usePathname();
   const router = useRouter();
   const { token, removeToken } = useAuth();
+  
 
   const handleLinkClick = (href: string) => {
     setIsLoading(true);
@@ -150,18 +152,19 @@ export default function Navbar() {
                 { href: "/plans", label: "Plans" },
                 { href: "/about", label: "About" },
                 { href: "/contact", label: "Contact" },
-              ].map((item) => (
+              ].map((item,index) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
                     onClick={(e) => {
                       e.preventDefault();
                       handleLinkClick(item.href);
+                      setActiveItem(index)
                     }}
                     className="relative px-3 py-2 text-sm font-medium transition-all duration-200 hover:text-blue-200 group"
                   >
                     {item.label}
-                    <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-white transition-all duration-200 group-hover:w-full group-hover:left-0"></span>
+                    <span className={`absolute bottom-0 left-1/2 w-0 h-0.5 bg-white transition-all duration-200 ${activeItem===index && "w-full !left-0"} group-hover:w-full group-hover:left-0`}></span>
                   </Link>
                 </li>
               ))}
