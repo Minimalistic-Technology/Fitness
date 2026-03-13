@@ -18,7 +18,7 @@ import {
   Timer,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import axios from "axios"; // Add axios for API calls
+// axios removed for dummy data
 import { useAuth } from "../context/context"; // Assuming this provides the auth token
 
 interface Exercise {
@@ -57,56 +57,15 @@ const VideoModal: React.FC<VideoModalProps> = ({
 
   // Check if the workout is already in favorites when modal opens
   useEffect(() => {
-    const checkFavoriteStatus = async () => {
-      if (!workout || !token) return;
-      try {
-        const response = await axios.get(
-          "http://localhost:5000/api/fitness/me",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        const favorites = response.data.favouriteWorkouts || [];
-        setIsFavorite(
-          favorites.some((fav: Workout) => fav._id === workout._id)
-        );
-      } catch (error) {
-        console.error("Error checking favorite status:", error);
-      }
-    };
-    checkFavoriteStatus();
-  }, [workout, token]);
+    // Dummy check for favorite status
+    setIsFavorite(false);
+  }, [workout]);
 
   // Handle adding/removing from favorites
   const handleFavoriteToggle = async () => {
-    if (!workout || !token) return;
-    setLoadingFavorite(true);
-    try {
-      if (isFavorite) {
-        // Remove from favorites
-        await axios.delete(
-          `http://localhost:5000/api/fitness/favourites/${workout._id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setIsFavorite(false);
-      } else {
-        // Add to favorites
-        await axios.post(
-          `http://localhost:5000/api/fitness/favourites/${workout._id}`,
-          {},
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setIsFavorite(true);
-      }
-    } catch (error) {
-      console.error("Error toggling favorite:", error);
-    } finally {
-      setLoadingFavorite(false);
-    }
+    if (!workout) return;
+    setIsFavorite(!isFavorite);
+    alert(isFavorite ? "Removed from Favorites" : "Added to Favorites");
   };
 
   if (!isOpen || !workout) return null;
@@ -229,21 +188,47 @@ const WorkoutsPage: React.FC = () => {
 
   useEffect(() => {
     const fetchWorkouts = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(
-          "http://localhost:5000/api/fitness/workouts"
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch workouts");
+      setLoading(true);
+      const dummyWorkouts: Workout[] = [
+        {
+          _id: "1",
+          title: "Full Body Strength",
+          description: "A comprehensive strength workout for all major muscle groups.",
+          duration: 45,
+          type: "strength",
+          exercises: [
+            { name: "Squats", sets: 3, reps: "12" },
+            { name: "Push ups", sets: 3, reps: "15" },
+          ],
+          image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80"
+        },
+        {
+          _id: "2",
+          title: "Cardio Blast",
+          description: "High intensity cardio to get your heart rate up.",
+          duration: 30,
+          type: "cardio",
+          exercises: [
+            { name: "Jumping Jacks", sets: 4, reps: "30 sec" },
+            { name: "Burpees", sets: 3, reps: "10" },
+          ],
+          image: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=800&q=80"
+        },
+        {
+          _id: "3",
+          title: "Yoga Flow",
+          description: "Relaxing yoga flow for flexibility and mindfulness.",
+          duration: 20,
+          type: "yoga",
+          exercises: [
+            { name: "Sun Salutation", sets: 3, reps: "5 mins" },
+            { name: "Warrior Pose", sets: 2, reps: "1 min each side" },
+          ],
+          image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80"
         }
-        const data: Workout[] = await response.json();
-        setWorkouts(data);
-      } catch (err) {
-        setError("Error fetching workouts. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
+      ];
+      setWorkouts(dummyWorkouts);
+      setLoading(false);
     };
 
     fetchWorkouts();

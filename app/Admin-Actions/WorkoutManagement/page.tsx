@@ -35,7 +35,7 @@ interface Workout {
   createdAt: string;
 }
 
-const BASE_URL = "http://localhost:5000/api/fitness";
+// const BASE_URL = "http://localhost:5000/api/fitness";
 
 const WorkoutManagement: React.FC = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
@@ -60,13 +60,30 @@ const WorkoutManagement: React.FC = () => {
   }, []);
 
   const fetchWorkouts = async () => {
-    try {
-      const response = await fetch(`${BASE_URL}/workouts`);
-      const data = await response.json();
-      setWorkouts(data);
-    } catch (error) {
-      console.error("Failed to fetch workouts:", error);
-    }
+    // Dummy workouts
+    const dummyWorkouts: Workout[] = [
+      {
+        _id: "1",
+        title: "Full Body Strength",
+        description: "A comprehensive strength workout for all major muscle groups.",
+        duration: 45,
+        type: "strength",
+        exercises: [{ name: "Squats", sets: 3, reps: 12 }],
+        createdAt: new Date().toISOString(),
+        image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80"
+      },
+      {
+        _id: "2",
+        title: "Cardio Blast",
+        description: "High intensity cardio to get your heart rate up.",
+        duration: 30,
+        type: "cardio",
+        exercises: [{ name: "Jumping Jacks", sets: 4, reps: 30 }],
+        createdAt: new Date().toISOString(),
+        image: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=800&q=80"
+      }
+    ];
+    setWorkouts(dummyWorkouts);
   };
 
   const handleOpenModal = (workout?: Workout) => {
@@ -169,61 +186,38 @@ const handleInputChange = (field: string, value: any, index?: number) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      if (editingWorkout) {
-        // Update workout
-        const response = await fetch(
-          `${BASE_URL}/workouts/${editingWorkout._id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-          }
-        );
-        if (response.ok) {
-          const updatedWorkout = await response.json();
-          setWorkouts((prev) =>
-            prev.map((workout) =>
-              workout._id === editingWorkout._id ? updatedWorkout : workout
-            )
-          );
-        }
-      } else {
-        // Create new workout
-        const response = await fetch(`${BASE_URL}/workouts`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        });
-        if (response.ok) {
-          const newWorkout = await response.json();
-          setWorkouts((prev) => [newWorkout, ...prev]);
-        }
-      }
-      handleCloseModal();
-    } catch (error) {
-      console.error("Failed to save workout:", error);
+    if (editingWorkout) {
+      // Dummy Update workout
+      setWorkouts((prev) =>
+        prev.map((workout) =>
+          workout._id === editingWorkout._id ? { ...workout, ...formData as Workout } : workout
+        )
+      );
+      alert("Workout updated successfully (dummy)!");
+    } else {
+      // Dummy Create new workout
+      const newWorkout: Workout = {
+        _id: Math.random().toString(36).substr(2, 9),
+        title: formData.title || "New Workout",
+        description: formData.description || "",
+        duration: formData.duration || 30,
+        type: formData.type as any || "strength",
+        exercises: formData.exercises as any || [],
+        createdAt: new Date().toISOString(),
+        ...formData
+      };
+      setWorkouts((prev) => [newWorkout, ...prev]);
+      alert("Workout created successfully (dummy)!");
     }
+    handleCloseModal();
   };
 
   const handleDelete = async (workoutId: string) => {
     if (confirm("Are you sure you want to delete this workout?")) {
-      try {
-        const response = await fetch(`${BASE_URL}/workouts/${workoutId}`, {
-          method: "DELETE",
-        });
-        if (response.ok) {
-          setWorkouts((prev) =>
-            prev.filter((workout) => workout._id !== workoutId)
-          );
-        }
-      } catch (error) {
-        console.error("Failed to delete workout:", error);
-      }
+      setWorkouts((prev) =>
+        prev.filter((workout) => workout._id !== workoutId)
+      );
+      alert("Workout deleted successfully (dummy)!");
     }
   };
 

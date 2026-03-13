@@ -17,7 +17,7 @@ import {
   Target,
   Trophy,
 } from "lucide-react";
-import axios from "axios";
+// axios removed for dummy data
 import { useAuth } from "../context/context";
 import { useRouter } from "next/navigation";
 
@@ -69,35 +69,28 @@ const UserProfilePage: React.FC = () => {
   }, [token, router, loading]);
 
   const fetchProfile = async () => {
-    try {
-      const response = await axios.get("http://localhost:5000/api/fitness/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const { profile, stats, favouriteWorkouts } = response.data;
-      setUserProfile({
-        _id: profile._id,
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        email: profile.email,
-        phoneNumber: profile.phone || "",
-        description: profile.description || "",
-        totalWorkouts: stats.totalWorkouts || 0,
-        totalMinutes: stats.totalMinutes || 0,
-      });
-      setEditedProfile({
-        _id: profile._id,
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        email: profile.email,
-        phoneNumber: profile.phone || "",
-        description: profile.description || "",
-        totalWorkouts: stats.totalWorkouts || 0,
-        totalMinutes: stats.totalMinutes || 0,
-      });
-      setFavoriteWorkouts(favouriteWorkouts || []);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-    }
+    const dummyUser: UserProfile = {
+      _id: "admin-id",
+      firstName: "Admin",
+      lastName: "User",
+      email: "admin",
+      phoneNumber: "1234567890",
+      description: "Fitness enthusiast and project administrator.",
+      totalWorkouts: 15,
+      totalMinutes: 450,
+    };
+    setUserProfile(dummyUser);
+    setEditedProfile(dummyUser);
+    setFavoriteWorkouts([
+      {
+        _id: "1",
+        title: "Full Body Strength",
+        description: "A comprehensive strength workout for all major muscle groups.",
+        duration: 45,
+        type: "strength",
+        image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80"
+      }
+    ]);
   };
 
   const handleEdit = () => {
@@ -106,17 +99,9 @@ const UserProfilePage: React.FC = () => {
   };
 
   const handleSave = async () => {
-    try {
-      await axios.put("http://localhost:5000/api/fitness/me", editedProfile, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setUserProfile(editedProfile);
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Error updating profile:", error);
-    }
+    setUserProfile(editedProfile);
+    setIsEditing(false);
+    alert("Profile updated successfully!");
   };
 
   const handleCancel = () => {
@@ -132,19 +117,10 @@ const UserProfilePage: React.FC = () => {
   };
 
   const removeFavorite = async (workoutId: string) => {
-    try {
-      await axios.delete(
-        `http://localhost:5000/api/fitness/favourites/${workoutId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setFavoriteWorkouts((prev) =>
-        prev.filter((workout) => workout._id !== workoutId)
-      );
-    } catch (error) {
-      console.error("Error removing favorite:", error);
-    }
+    setFavoriteWorkouts((prev) =>
+      prev.filter((workout) => workout._id !== workoutId)
+    );
+    alert("Removed from Favorites");
   };
 
   const getWorkoutIcon = (type: string) => {

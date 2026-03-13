@@ -52,7 +52,7 @@
 //             ...prev,
 //             [name]: type === 'checkbox' ? checked : value
 //         }));
-        
+
 //         // Clear error when user starts typing
 //         if (errors[name as keyof FormErrors]) {
 //             setErrors(prev => ({
@@ -64,7 +64,7 @@
 
 //     const validateForm = () => {
 //         const newErrors: FormErrors = {};
-        
+
 //         if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
 //         if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
 //         if (!formData.email.trim()) newErrors.email = 'Email is required';
@@ -72,7 +72,7 @@
 //         if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
 //         if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
 //         if (!formData.agreeToTerms) newErrors.agreeToTerms = 'You must agree to the terms and conditions';
-        
+
 //         setErrors(newErrors);
 //         return Object.keys(newErrors).length === 0;
 //     };
@@ -122,7 +122,7 @@
 //                             <span className="text-white font-bold text-2xl">FP</span>
 //                         </div>
 //                     </div>
-                    
+
 //                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Join Fitness Pro</h1>
 //                     <p className="text-gray-600 mb-8">Create your account and start your fitness journey</p>
 //                 </div>
@@ -155,7 +155,7 @@
 //                                 </div>
 //                                 {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>}
 //                             </div>
-                            
+
 //                             <div className="space-y-2">
 //                                 <label htmlFor="lastName" className="text-sm font-medium text-gray-700 block">
 //                                     Last Name
@@ -311,7 +311,7 @@
 //                                 </label>
 //                             </div>
 //                             {errors.agreeToTerms && <p className="text-red-500 text-xs">{errors.agreeToTerms}</p>}
-                            
+
 //                             <div className="flex items-center">
 //                                 <input
 //                                     type="checkbox"
@@ -367,7 +367,6 @@
 
 import React, { useState } from "react";
 import { Eye, EyeOff, Lock, Mail, ArrowLeft, User, Phone } from "lucide-react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/context";
 
@@ -416,7 +415,7 @@ const SignupPage = () => {
   const [formData, setFormData] = useState<SignupFormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const router = useRouter()
-  const {setToken} = useAuth();
+  const { setToken } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -455,34 +454,9 @@ const SignupPage = () => {
 
   const handleSubmit = async () => {
     if (validateForm()) {
-      // const fullName = ${formData.firstName} ${formData.lastName};
-
-      try {
-        const res = await axios.post(
-          "http://localhost:5000/api/fitness/signup",
-          {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            password: formData.password,
-            phone: formData.phone,
-            description: formData.description,
-          }
-        );
-        setToken(res?.data?.token)
-        // localStorage.setItem("accessToken", res?.data?.token);
-        alert("Signup successful!");
-        router.push("/")
-        // Optional: router.push("/login");
-      } catch (err: any) {
-        if (err.response) {
-          console.error("Signup error:", err.response.data?.error);
-          alert(err.response.data?.error || "Signup failed");
-        } else {
-          console.error("Network error:", err.message);
-          alert("Something went wrong. Please try again.");
-        }
-      }
+      alert("Signup successful!");
+      setToken("dummy-token");
+      router.push("/");
     }
   };
   return (
@@ -537,9 +511,8 @@ const SignupPage = () => {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${
-                      errors.firstName ? "border-red-300" : "border-gray-300"
-                    }`}
+                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${errors.firstName ? "border-red-300" : "border-gray-300"
+                      }`}
                     placeholder="John"
                     required
                   />
@@ -565,9 +538,8 @@ const SignupPage = () => {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className={`w-full pl-4 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${
-                      errors.lastName ? "border-red-300" : "border-gray-300"
-                    }`}
+                    className={`w-full pl-4 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${errors.lastName ? "border-red-300" : "border-gray-300"
+                      }`}
                     placeholder="Doe"
                     required
                   />
@@ -596,9 +568,8 @@ const SignupPage = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${
-                    errors.email ? "border-red-300" : "border-gray-300"
-                  }`}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${errors.email ? "border-red-300" : "border-gray-300"
+                    }`}
                   placeholder="john.doe@example.com"
                   required
                 />
@@ -650,9 +621,8 @@ const SignupPage = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${
-                    errors.password ? "border-red-300" : "border-gray-300"
-                  }`}
+                  className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${errors.password ? "border-red-300" : "border-gray-300"
+                    }`}
                   placeholder="Create a strong password"
                   required
                 />
@@ -691,11 +661,10 @@ const SignupPage = () => {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${
-                    errors.confirmPassword
+                  className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${errors.confirmPassword
                       ? "border-red-300"
                       : "border-gray-300"
-                  }`}
+                    }`}
                   placeholder="Confirm your password"
                   required
                 />
@@ -734,9 +703,8 @@ const SignupPage = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${
-                    errors.email ? "border-red-300" : "border-gray-300"
-                  }`}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${errors.email ? "border-red-300" : "border-gray-300"
+                    }`}
                   placeholder="I'm a fitness-savvy guy"
                   required
                 />

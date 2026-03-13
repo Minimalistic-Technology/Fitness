@@ -13,7 +13,7 @@ import {
   Clock,
   Apple,
 } from "lucide-react";
-import axios from "axios";
+// axios removed for dummy data
 
 // Define a type for BMI data
 interface BMIData {
@@ -69,41 +69,39 @@ export default function BMITracker() {
   const [apiError, setApiError] = useState<string | null>(null);
 
   // API base URL
-  const API_BASE_URL = "http://localhost:5000/api/fitness";
+  // const API_BASE_URL = "http://localhost:5000/api/fitness";
 
   // Fetch BMI history from the backend on component mount
   useEffect(() => {
     const fetchBmiHistory = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/bmi`);
-        const plans = response.data;
-        // Map backend data to BMIData format
-        const formattedHistory: BMIData[] = plans.map((plan: any) => ({
-          _id: plan._id,
-          weight: plan.weight / (unit === "metric" ? 1 : 0.453592), // Convert to lbs if imperial
-          weightKg: plan.weight,
-          height: plan.height / (unit === "metric" ? 1 : 2.54), // Convert to inches if imperial
-          heightM: plan.height / 100,
-          date: new Date(plan.createdAt).toLocaleString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }),
-          unit: unit,
-          bmi: plan.bmi,
-        }));
-        setBmiHistory(formattedHistory);
-      } catch (error) {
-        console.error("Error fetching BMI history:", error);
-        setApiError("Failed to load BMI history.");
-      }
+      // Dummy BMI history
+      const dummyHistory: BMIData[] = [
+        {
+          _id: "record-1",
+          weight: 75,
+          weightKg: 75,
+          height: 180,
+          heightM: 1.8,
+          date: "Oct 15, 2023, 10:30 AM",
+          unit: "metric",
+          bmi: 23.1,
+        },
+        {
+          _id: "record-2",
+          weight: 78,
+          weightKg: 78,
+          height: 180,
+          heightM: 1.8,
+          date: "Sep 15, 2023, 09:15 AM",
+          unit: "metric",
+          bmi: 24.1,
+        }
+      ];
+      setBmiHistory(dummyHistory);
     };
 
     fetchBmiHistory();
-  }, [unit]); // Re-fetch if unit changes to adjust measurements
+  }, []);
 
   const calculateBMI = async () => {
     if (!height || !weight) return;
@@ -111,61 +109,12 @@ export default function BMITracker() {
     setIsCalculating(true);
     setApiError(null);
 
-    try {
-      let heightInMeters, weightInKg;
-
-      if (unit === "metric") {
-        heightInMeters = parseFloat(height) / 100;
-        weightInKg = parseFloat(weight);
-      } else {
-        heightInMeters = parseFloat(height) * 0.0254;
-        weightInKg = parseFloat(weight) * 0.453592;
-      }
-
-      // Call API to get BMI and diet plan
-      const response = await axios.post<ApiBmiResponse>(`${API_BASE_URL}/bmi`, {
-        height: parseFloat(height) * (unit === "metric" ? 1 : 2.54), // Convert to cm
-        weight: parseFloat(weight) * (unit === "metric" ? 1 : 0.453592), // Convert to kg
-        age: parseInt(age) || 25,
-        gender,
-        activityLevel,
-      });
-
-      const bmiValue = response.data.bmi;
-
-      setBmi(bmiValue);
-
-      // Create new BMI entry
-      const newBMIEntry: BMIData = {
-        _id: response.data._id,
-        weight: parseFloat(weight),
-        weightKg: weightInKg,
-        height: parseFloat(height),
-        heightM: heightInMeters,
-        date: new Date().toLocaleString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }),
-        unit: unit,
-        bmi: bmiValue,
-      };
-
-      // Update history with new entry
-      const updatedHistory = [newBMIEntry, ...bmiHistory];
-      setBmiHistory(updatedHistory);
-    } catch (error) {
-      console.error("Error fetching BMI data:", error);
-      setApiError("Failed to calculate BMI. Please try again.");
-
-      // Fallback to local calculation if API fails
+    // Simulate delay
+    setTimeout(() => {
       calculateBMILocally();
-    } finally {
       setIsCalculating(false);
-    }
+      alert("BMI Calculated and saved!");
+    }, 1000);
   };
 
   // Fallback local BMI calculation
@@ -460,18 +409,8 @@ export default function BMITracker() {
   };
 
   const clearHistory = async () => {
-    try {
-      // Delete each BMI plan from the backend
-      for (const record of bmiHistory) {
-        if (record._id) {
-          await axios.delete(`${API_BASE_URL}/bmi/${record._id}`);
-        }
-      }
-      setBmiHistory([]);
-    } catch (error) {
-      console.error("Error clearing BMI history:", error);
-      setApiError("Failed to clear BMI history.");
-    }
+    setBmiHistory([]);
+    alert("History cleared!");
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

@@ -343,7 +343,6 @@
 
 import React, { useState } from "react";
 import { Eye, EyeOff, Lock, Mail, ArrowLeft } from "lucide-react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/context";
 export default function LoginPage() {
@@ -367,46 +366,16 @@ export default function LoginPage() {
   const handleButtonClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
-    try {
-         
-      if (
-        formData.email == process.env.NEXT_PUBLIC_admin_gmail &&
-        formData.password == process.env.NEXT_PUBLIC_admin_password
-      ) {
-        console.log("admin login send");
-        router.push("/Admin");
-        return;
-      }
-else
-      {const res = await axios.post(
-        "http://localhost:5000/api/fitness/login",
-        {
-          email: formData.email,
-          password: formData.password,
-        },
-        {
-          withCredentials: true, // required for setting cookies like refreshToken
-        }
-      );
-
-      const { token } = res.data;
-
-      
+    if (
+      formData.email === "admin" &&
+      formData.password === "admin123"
+    ) {
+      console.log("Login successful");
       alert("Login successful");
+      setToken("dummy-admin-token");
       router.push("/");
-      // Optional: save token in localStorage/sessionStorage
-      setToken(token)
-
-      // Optional: navigate to dashboard
-      // router.push("/dashboard");
-      }
-    } catch (err: any) {
-      if (err.response) {
-        alert(err.response.data?.error || "Login failed");
-      } else {
-        console.error("Login error:", err.message);
-        alert("Something went wrong. Please try again.");
-      }
+    } else {
+      alert("Invalid credentials. Use admin / admin123");
     }
   };
 
